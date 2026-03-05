@@ -1,0 +1,136 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 80" width="320" height="80">
+  <defs>
+    <!-- Main gradient -->
+    <linearGradient id="gMain" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#60a5fa"/>
+      <stop offset="50%" stop-color="#6366f1"/>
+      <stop offset="100%" stop-color="#4338ca"/>
+    </linearGradient>
+
+    <!-- Glow gradient for ring -->
+    <linearGradient id="gRing" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#93c5fd"/>
+      <stop offset="100%" stop-color="#6366f1"/>
+    </linearGradient>
+
+    <!-- Core glow -->
+    <radialGradient id="gCore" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#e0f2ff" stop-opacity="1"/>
+      <stop offset="60%" stop-color="#60a5fa" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#3b82f6" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Outer glow filter -->
+    <filter id="fGlow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="2.5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Soft glow for core -->
+    <filter id="fCoreGlow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Text gradient -->
+    <linearGradient id="gText" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#e0f2ff"/>
+      <stop offset="55%" stop-color="#93c5fd"/>
+      <stop offset="100%" stop-color="#818cf8"/>
+    </linearGradient>
+
+    <!-- Tagline gradient -->
+    <linearGradient id="gTag" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#6366f1" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#3b82f6" stop-opacity="0.7"/>
+    </linearGradient>
+  </defs>
+
+  <!-- ═══ ICON (center: 40,40) ═══ -->
+
+  <!-- Outer orbit ring - tilted ellipse -->
+  <ellipse cx="40" cy="40" rx="28" ry="10"
+    fill="none" stroke="url(#gRing)" stroke-width="1.4"
+    stroke-dasharray="5 2.5" opacity="0.5"
+    transform="rotate(-30 40 40)" filter="url(#fGlow)"/>
+
+  <!-- Second orbit ring - opposite tilt -->
+  <ellipse cx="40" cy="40" rx="22" ry="7"
+    fill="none" stroke="#6366f1" stroke-width="1"
+    stroke-dasharray="3 3" opacity="0.35"
+    transform="rotate(50 40 40)"/>
+
+  <!-- Main circle (quasar body) -->
+  <circle cx="40" cy="40" r="16"
+    fill="none" stroke="url(#gMain)" stroke-width="2"
+    filter="url(#fGlow)"/>
+
+  <!-- Inner circle -->
+  <circle cx="40" cy="40" r="10"
+    fill="none" stroke="#6366f1" stroke-width="1.2" opacity="0.6"/>
+
+  <!-- Jet beams (quasar polar jets) -->
+  <!-- Top jet -->
+  <line x1="40" y1="24" x2="40" y2="8"
+    stroke="url(#gMain)" stroke-width="1.8"
+    stroke-linecap="round" filter="url(#fGlow)" opacity="0.85"/>
+  <!-- Bottom jet -->
+  <line x1="40" y1="56" x2="40" y2="72"
+    stroke="url(#gMain)" stroke-width="1.8"
+    stroke-linecap="round" filter="url(#fGlow)" opacity="0.85"/>
+
+  <!-- Jet glow lines (wider, transparent) -->
+  <line x1="40" y1="22" x2="40" y2="8"
+    stroke="#60a5fa" stroke-width="4"
+    stroke-linecap="round" opacity="0.15"/>
+  <line x1="40" y1="58" x2="40" y2="72"
+    stroke="#60a5fa" stroke-width="4"
+    stroke-linecap="round" opacity="0.15"/>
+
+  <!-- Jet tip flares -->
+  <circle cx="40" cy="7"  r="2.2" fill="#93c5fd" opacity="0.7" filter="url(#fCoreGlow)"/>
+  <circle cx="40" cy="73" r="2.2" fill="#93c5fd" opacity="0.7" filter="url(#fCoreGlow)"/>
+
+  <!-- Small orbiting dot (planet/star) -->
+  <circle cx="62" cy="34" r="2.5"
+    fill="#818cf8" filter="url(#fCoreGlow)" opacity="0.9"/>
+  <circle cx="18" cy="46" r="1.8"
+    fill="#60a5fa" filter="url(#fCoreGlow)" opacity="0.7"/>
+
+  <!-- Core glow -->
+  <circle cx="40" cy="40" r="7" fill="url(#gCore)" filter="url(#fCoreGlow)"/>
+  <!-- Core bright center -->
+  <circle cx="40" cy="40" r="3" fill="#ffffff" opacity="0.95" filter="url(#fCoreGlow)"/>
+
+  <!-- Accent stars around -->
+  <circle cx="28" cy="18" r="1"   fill="#93c5fd" opacity="0.6"/>
+  <circle cx="55" cy="58" r="0.8" fill="#818cf8" opacity="0.5"/>
+  <circle cx="58" cy="22" r="0.7" fill="#60a5fa" opacity="0.4"/>
+  <circle cx="20" cy="60" r="0.9" fill="#6366f1" opacity="0.5"/>
+
+  <!-- ═══ TEXT ═══ -->
+  <!-- Main wordmark -->
+  <text x="92" y="47"
+    font-family="'Orbitron', 'Exo 2', 'Space Grotesk', monospace"
+    font-size="28" font-weight="700"
+    letter-spacing="3"
+    fill="url(#gText)">QUASAR</text>
+
+  <!-- Tagline -->
+  <text x="93" y="62"
+    font-family="'DM Sans', 'Exo 2', sans-serif"
+    font-size="9" font-weight="400"
+    letter-spacing="4"
+    fill="url(#gTag)">AI BUILDER</text>
+
+  <!-- Separator line between icon and text -->
+  <line x1="82" y1="22" x2="82" y2="58"
+    stroke="url(#gMain)" stroke-width="1" opacity="0.25"/>
+</svg>
