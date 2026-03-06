@@ -84,7 +84,7 @@ export default function Footer() {
                     </div>
 
                     {/* Links */}
-                    <div className="mt-12 grid grid-cols-3 gap-8 xl:col-span-2 xl:mt-0">
+                    <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 xl:col-span-2 xl:mt-0">
                         <div>
                             <h3 className="text-sm font-semibold text-white mb-4">Product</h3>
                             <ul className="space-y-3">

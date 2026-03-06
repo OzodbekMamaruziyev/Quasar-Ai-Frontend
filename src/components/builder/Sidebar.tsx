@@ -132,12 +132,14 @@ export default function Sidebar() {
                                 </div>
                             )}
                             {!isCollapsed && activeVersion !== v.id && (
-                                <button
+                                <span
                                     onClick={(e) => { e.stopPropagation(); }}
+                                    role="button"
+                                    tabIndex={0}
                                     className="opacity-0 group-hover:opacity-100 p-0.5 text-zinc-600 hover:text-red-400 transition-all"
                                 >
                                     <Trash2 size={12} />
-                                </button>
+                                </span>
                             )}
                         </button>
                     ))}
