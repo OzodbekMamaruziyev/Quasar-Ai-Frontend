@@ -3,7 +3,9 @@
 import { motion } from "framer-motion";
 import { ExternalLink, Trash2, Layers } from "lucide-react";
 import Link from "next/link";
-import { ProjectStatus } from "@/lib/mock-data";
+import { Project } from "@/lib/api";
+
+type ProjectStatus = "ACTIVE" | "DRAFT" | "PUBLISHED" | "ARCHIVED";
 import { useState } from "react";
 
 export interface ProjectCardProps {
@@ -18,10 +20,10 @@ export interface ProjectCardProps {
 }
 
 const STATUS_STYLES: Record<ProjectStatus, string> = {
-  active: "bg-blue-500/15 text-blue-400 border-blue-500/20",
-  draft: "bg-zinc-500/15 text-zinc-400 border-zinc-500/20",
-  published: "bg-green-500/15 text-green-400 border-green-500/20",
-  archived: "bg-yellow-500/15 text-yellow-400 border-yellow-500/20",
+  ACTIVE: "bg-blue-500/15 text-blue-400 border-blue-500/20",
+  DRAFT: "bg-zinc-500/15 text-zinc-400 border-zinc-500/20",
+  PUBLISHED: "bg-green-500/15 text-green-400 border-green-500/20",
+  ARCHIVED: "bg-yellow-500/15 text-yellow-400 border-yellow-500/20",
 };
 
 // 3D Tilt Effect Hook
@@ -53,7 +55,7 @@ export default function ProjectCard({
   id,
   name,
   updatedAt,
-  status = "draft",
+  status = "DRAFT",
   gradient = "from-blue-600 to-indigo-600",
   screens = 0,
   onDelete,

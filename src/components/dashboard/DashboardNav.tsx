@@ -7,7 +7,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { MOCK_USER } from "@/lib/mock-data";
+import { useAuth } from "@/context/AuthContext";
 
 const NAV_ITEMS = [
     { name: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
@@ -19,6 +19,23 @@ const NAV_ITEMS = [
 function NavContent({ onClose }: { onClose?: () => void }) {
     const pathname = usePathname();
     const router = useRouter();
+    const { user, logout } = useAuth();
+
+    const handleLogout = async () => {
+        await logout();
+        if (onClose) onClose();
+    };
+
+    // Get initials from user name
+    const getInitials = (name: string | undefined) => {
+        if (!name) return '??';
+        return name
+            .split(' ')
+            .map(n => n[0])
+            .join('')
+            .toUpperCase()
+            .slice(0, 2);
+    };
 
     return (
         <div className="flex h-full flex-col p-4">
@@ -71,17 +88,20 @@ function NavContent({ onClose }: { onClose?: () => void }) {
 
             {/* User + Sign Out */}
             <div className="border-t border-white/5 pt-4 space-y-2">
-                <div className="flex items-center gap-3 rounded-xl px-3 py-2.5 bg-white/3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-accent to-indigo-600 text-xs font-bold text-white shrink-0">
-                        {MOCK_USER.avatar}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                        <p className="text-xs font-semibold text-white truncate">{MOCK_USER.name}</p>
-                        <p className="text-[10px] text-zinc-600 truncate">{MOCK_USER.plan} Plan</p>
-                    </div>
-                </div>
                 <button
-                    onClick={() => router.push("/login")}
+                    onClick={() => router.push('/dashboard/settings')}
+                    className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 bg-white/3 hover:bg-white/8 transition-all"
+                >
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-linear-to-br from-accent to-indigo-600 text-xs font-bold text-white shrink-0">
+                        {user ? getInitials(user.name) : 'U'}
+                    </div>
+                    <div className="flex-1 min-w-0 text-left">
+                        <p className="text-xs font-semibold text-white truncate">{user?.name || 'Loading...'}</p>
+                        <p className="text-[10px] text-zinc-600 truncate">{user?.plan || 'FREE'} Plan</p>
+                    </div>
+                </button>
+                <button
+                    onClick={handleLogout}
                     className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-zinc-500 transition-colors hover:bg-red-500/10 hover:text-red-400"
                 >
                     <LogOut size={17} />

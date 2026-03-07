@@ -3,11 +3,29 @@
 import { motion } from "framer-motion";
 import { Check, Zap, Star } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
-import { BILLING_PLANS } from "@/lib/mock-data";
+import { useState, useEffect } from "react";
+import { billingApi, type Plan } from "@/lib/api";
 
 export default function Pricing() {
     const [billing, setBilling] = useState<"monthly" | "yearly">("monthly");
+    const [plans, setPlans] = useState<Plan[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchPlans = async () => {
+            try {
+                setLoading(true);
+                const response = await billingApi.getPlans();
+                setPlans(response.data);
+            } catch (error) {
+                // Ignore silent errors for unauthenticated users fetching public plans
+                console.warn('Could not fetch plans. Using fallbacks.');
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchPlans();
+    }, []);
 
     const getPrice = (price: number) => billing === "yearly" ? Math.round(price * 0.8) : price;
 
@@ -64,64 +82,70 @@ export default function Pricing() {
 
                 {/* Plans */}
                 <div className="grid gap-5 sm:grid-cols-3">
-                    {BILLING_PLANS.map((plan, i) => {
-                        const price = getPrice(plan.price);
-                        return (
-                            <motion.div
-                                key={plan.id}
-                                initial={{ opacity: 0, y: 24 }}
-                                whileInView={{ opacity: 1, y: 0 }}
-                                viewport={{ once: true }}
-                                transition={{ delay: i * 0.1 }}
-                                className={`relative flex flex-col rounded-2xl border p-6 ${plan.popular
-                                        ? "border-accent/40 bg-gradient-to-b from-accent/10 to-transparent shadow-xl shadow-accent/10"
-                                        : "border-white/8 bg-zinc-900/30 hover:border-white/15 transition-colors"
-                                    }`}
-                            >
-                                {plan.popular && (
-                                    <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
-                                        <span className="flex items-center gap-1 rounded-full bg-accent px-3 py-1 text-xs font-bold text-white shadow-lg shadow-accent/30">
-                                            <Star size={10} className="fill-white" /> Most Popular
-                                        </span>
-                                    </div>
-                                )}
-
-                                <div className="mb-5">
-                                    <h3 className="text-lg font-bold text-white">{plan.name}</h3>
-                                    <p className="text-xs text-zinc-500 mt-1">{plan.description}</p>
-                                </div>
-
-                                <div className="mb-6">
-                                    <div className="flex items-end gap-1">
-                                        <span className="text-4xl font-extrabold text-white">${price}</span>
-                                        <span className="text-zinc-500 text-sm mb-1.5">/{plan.period === "forever" ? "forever" : "mo"}</span>
-                                    </div>
-                                    {billing === "yearly" && plan.price > 0 && (
-                                        <p className="text-xs text-green-400 mt-1">Save ${(plan.price - price) * 12}/year</p>
-                                    )}
-                                </div>
-
-                                <ul className="space-y-2.5 mb-6 flex-1">
-                                    {plan.features.map((feature, fi) => (
-                                        <li key={fi} className={`flex items-start gap-2 text-sm ${feature.included ? "text-zinc-300" : "text-zinc-600"}`}>
-                                            <Check size={14} className={`shrink-0 mt-0.5 ${feature.included ? "text-green-400" : "text-zinc-700"}`} />
-                                            {feature.text}
-                                        </li>
-                                    ))}
-                                </ul>
-
-                                <Link
-                                    href="/signup"
-                                    className={`flex w-full items-center justify-center rounded-xl py-2.5 text-sm font-bold transition-all ${plan.popular
-                                            ? "bg-accent text-white hover:bg-blue-600 hover:scale-[1.02] neon-glow"
-                                            : "bg-white/8 text-white hover:bg-white/15 border border-white/10"
+                    {loading ? (
+                        Array.from({ length: 3 }).map((_, i) => (
+                            <div key={i} className="rounded-2xl border border-white/8 bg-zinc-900/30 p-6 h-96 animate-pulse" />
+                        ))
+                    ) : (
+                        plans.map((plan: Plan, i: number) => {
+                            const price = getPrice(plan.price);
+                            return (
+                                <motion.div
+                                    key={plan.id}
+                                    initial={{ opacity: 0, y: 24 }}
+                                    whileInView={{ opacity: 1, y: 0 }}
+                                    viewport={{ once: true }}
+                                    transition={{ delay: i * 0.1 }}
+                                    className={`relative flex flex-col rounded-2xl border p-6 ${plan.popular
+                                            ? "border-accent/40 bg-gradient-to-b from-accent/10 to-transparent shadow-xl shadow-accent/10"
+                                            : "border-white/8 bg-zinc-900/30 hover:border-white/15 transition-colors"
                                         }`}
                                 >
-                                    {plan.price === 0 ? "Get Started Free" : "Start Free Trial"}
-                                </Link>
-                            </motion.div>
-                        );
-                    })}
+                                    {plan.popular && (
+                                        <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
+                                            <span className="flex items-center gap-1 rounded-full bg-accent px-3 py-1 text-xs font-bold text-white shadow-lg shadow-accent/30">
+                                                <Star size={10} className="fill-white" /> Most Popular
+                                            </span>
+                                        </div>
+                                    )}
+
+                                    <div className="mb-5">
+                                        <h3 className="text-lg font-bold text-white">{plan.name}</h3>
+                                        <p className="text-xs text-zinc-500 mt-1">{plan.description}</p>
+                                    </div>
+
+                                    <div className="mb-6">
+                                        <div className="flex items-end gap-1">
+                                            <span className="text-4xl font-extrabold text-white">${price}</span>
+                                            <span className="text-zinc-500 text-sm mb-1.5">/{plan.id === "free" ? "forever" : "mo"}</span>
+                                        </div>
+                                        {billing === "yearly" && plan.price > 0 && (
+                                            <p className="text-xs text-green-400 mt-1">Save ${(plan.price - price) * 12}/year</p>
+                                        )}
+                                    </div>
+
+                                    <ul className="space-y-2.5 mb-6 flex-1">
+                                        {plan.features.map((feature: { text: string; included: boolean }, fi: number) => (
+                                            <li key={fi} className={`flex items-start gap-2 text-sm ${feature.included ? "text-zinc-300" : "text-zinc-600"}`}>
+                                                <Check size={14} className={`shrink-0 mt-0.5 ${feature.included ? "text-green-400" : "text-zinc-700"}`} />
+                                                {feature.text}
+                                            </li>
+                                        ))}
+                                    </ul>
+
+                                    <Link
+                                        href="/signup"
+                                        className={`flex w-full items-center justify-center rounded-xl py-2.5 text-sm font-bold transition-all ${plan.popular
+                                                ? "bg-accent text-white hover:bg-blue-600 hover:scale-[1.02] neon-glow"
+                                                : "bg-white/8 text-white hover:bg-white/15 border border-white/10"
+                                            }`}
+                                    >
+                                        {plan.price === 0 ? "Get Started Free" : "Start Free Trial"}
+                                    </Link>
+                                </motion.div>
+                            );
+                        })
+                    )}
                 </div>
 
                 <motion.p

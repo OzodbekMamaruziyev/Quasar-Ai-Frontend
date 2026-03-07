@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { User, Bell, Shield, Trash2, Check, Camera, Plus } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { MOCK_USER, MOCK_NOTIFICATIONS, MOCK_TEAM_MEMBERS, Notification } from "@/lib/mock-data";
+import { usersApi } from "@/lib/api";
+import { useAuth } from "@/context/AuthContext";
 
 const TABS = [
     { id: "profile", label: "Profile", icon: User },
@@ -13,12 +14,40 @@ const TABS = [
 
 export default function SettingsPage() {
     const [activeTab, setActiveTab] = useState("profile");
-    const [user, setUser] = useState(MOCK_USER);
-    const [notifications, setNotifications] = useState<Notification[]>(MOCK_NOTIFICATIONS);
+    const { user, updateUser } = useAuth();
+    const [formData, setFormData] = useState({
+        name: user?.name || '',
+        email: user?.email || '',
+        bio: user?.bio || '',
+        username: user?.username || '',
+        timezone: user?.timezone || 'UTC+0 (GMT)',
+        language: user?.language || 'English',
+    });
+    const [notifications, setNotifications] = useState([
+        { id: "1", description: "Project updates", enabled: true },
+        { id: "2", description: "New comments", enabled: true },
+        { id: "3", description: "Team invites", enabled: false },
+        { id: "4", description: "Marketing emails", enabled: false },
+    ]);
     const [toast, setToast] = useState("");
     const [saving, setSaving] = useState(false);
     const [inviteEmail, setInviteEmail] = useState("");
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+    // Update form when user data changes
+    useEffect(() => {
+        if (user) {
+            setFormData({
+                name: user.name || '',
+                email: user.email || '',
+                bio: user.bio || '',
+                username: user.username || '',
+                timezone: user.timezone || 'UTC+0 (GMT)',
+                language: user.language || 'English',
+            });
+        }
+    }, [user]);
+
 
     const showToast = (msg: string) => {
         setToast(msg);
@@ -27,9 +56,14 @@ export default function SettingsPage() {
 
     const handleSaveProfile = async () => {
         setSaving(true);
-        await new Promise((r) => setTimeout(r, 1000));
-        setSaving(false);
-        showToast("Profile saved successfully!");
+        try {
+            await updateUser(formData);
+            showToast("Profile saved successfully!");
+        } catch (error) {
+            showToast("Failed to save profile");
+        } finally {
+            setSaving(false);
+        }
     };
 
     const toggleNotification = (id: string) => {
@@ -43,6 +77,28 @@ export default function SettingsPage() {
         await new Promise((r) => setTimeout(r, 800));
         setSaving(false);
         showToast("Notification preferences saved!");
+    };
+
+    const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            setSaving(true);
+            const response = await usersApi.uploadAvatar(formData);
+            if (response.success) {
+                await updateUser({ avatar: response.data.avatar });
+                showToast("Avatar updated successfully!");
+            }
+        } catch (error) {
+            console.error('Failed to upload avatar:', error);
+            showToast("Failed to upload avatar");
+        } finally {
+            setSaving(false);
+        }
     };
 
     return (
@@ -76,19 +132,24 @@ export default function SettingsPage() {
                     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
                         {/* Avatar */}
                         <div className="flex items-center gap-5">
-                            <div className="relative">
-                                <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-accent to-indigo-600 text-2xl font-bold text-white shadow-lg">
-                                    {user.avatar}
+                            <div className="relative group">
+                                <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-linear-to-t from-accent to-indigo-600 text-2xl font-bold text-white shadow-lg overflow-hidden">
+                                    {user?.avatar ? (
+                                        <img src={user.avatar} alt={user.name} className="h-full w-full object-cover" />
+                                    ) : (
+                                        user?.name?.charAt(0).toUpperCase() || 'U'
+                                    )}
                                 </div>
-                                <button className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-zinc-800 border border-white/10 text-zinc-400 hover:text-white transition-colors">
+                                <label className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-zinc-800 border border-white/10 text-zinc-400 hover:text-white transition-colors cursor-pointer group-hover:bg-accent group-hover:text-white">
                                     <Camera size={13} />
-                                </button>
+                                    <input type="file" className="hidden" accept="image/*" onChange={handleAvatarUpload} />
+                                </label>
                             </div>
                             <div>
-                                <p className="text-base font-bold text-white">{user.name}</p>
-                                <p className="text-sm text-zinc-500">{user.email}</p>
+                                <p className="text-base font-bold text-white">{user?.name || 'Loading...'}</p>
+                                <p className="text-sm text-zinc-500">{user?.email || ''}</p>
                                 <span className="mt-1 inline-flex items-center rounded-full bg-accent/15 text-accent text-xs font-bold px-2.5 py-0.5">
-                                    {user.plan} Plan
+                                    {user?.plan || 'FREE'} Plan
                                 </span>
                             </div>
                         </div>
@@ -101,8 +162,8 @@ export default function SettingsPage() {
                                     <label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-2">Full Name</label>
                                     <input
                                         type="text"
-                                        value={user.name}
-                                        onChange={(e) => setUser({ ...user, name: e.target.value })}
+                                        value={formData.name}
+                                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                         className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent transition-all"
                                     />
                                 </div>
@@ -110,8 +171,8 @@ export default function SettingsPage() {
                                     <label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-2">Username</label>
                                     <input
                                         type="text"
-                                        value={user.username}
-                                        onChange={(e) => setUser({ ...user, username: e.target.value })}
+                                        value={formData.username}
+                                        onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                                         className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent transition-all"
                                     />
                                 </div>
@@ -120,16 +181,16 @@ export default function SettingsPage() {
                                 <label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-2">Email Address</label>
                                 <input
                                     type="email"
-                                    value={user.email}
-                                    onChange={(e) => setUser({ ...user, email: e.target.value })}
+                                    value={formData.email}
+                                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                     className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent transition-all"
                                 />
                             </div>
                             <div>
                                 <label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-2">Bio</label>
                                 <textarea
-                                    value={user.bio}
-                                    onChange={(e) => setUser({ ...user, bio: e.target.value })}
+                                    value={formData.bio}
+                                    onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
                                     rows={3}
                                     className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent transition-all resize-none"
                                 />
@@ -138,8 +199,8 @@ export default function SettingsPage() {
                                 <div>
                                     <label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-2">Timezone</label>
                                     <select
-                                        value={user.timezone}
-                                        onChange={(e) => setUser({ ...user, timezone: e.target.value })}
+                                        value={formData.timezone || 'UTC+0 (GMT)'}
+                                        onChange={(e) => setFormData({ ...formData, timezone: e.target.value })}
                                         className="w-full rounded-xl border border-white/10 bg-zinc-900 px-4 py-2.5 text-sm text-white focus:border-accent focus:outline-none transition-all"
                                     >
                                         <option>UTC-8 (Pacific Time)</option>
@@ -153,8 +214,8 @@ export default function SettingsPage() {
                                 <div>
                                     <label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-2">Language</label>
                                     <select
-                                        value={user.language}
-                                        onChange={(e) => setUser({ ...user, language: e.target.value })}
+                                        value={formData.language || 'English'}
+                                        onChange={(e) => setFormData({ ...formData, language: e.target.value })}
                                         className="w-full rounded-xl border border-white/10 bg-zinc-900 px-4 py-2.5 text-sm text-white focus:border-accent focus:outline-none transition-all"
                                     >
                                         <option>English</option>
@@ -182,21 +243,11 @@ export default function SettingsPage() {
                         <div className="rounded-2xl border border-white/8 bg-zinc-900/30 p-6">
                             <div className="flex items-center justify-between mb-5">
                                 <h2 className="text-base font-bold text-white">Team Members</h2>
-                                <span className="text-xs text-zinc-500">{MOCK_TEAM_MEMBERS.length}/3 seats used</span>
+                                <span className="text-xs text-zinc-500">0/3 seats used</span>
                             </div>
                             <div className="space-y-3 mb-5">
-                                {MOCK_TEAM_MEMBERS.map((member) => (
-                                    <div key={member.id} className="flex items-center gap-3 rounded-xl border border-white/5 bg-white/3 p-3">
-                                        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-accent to-indigo-600 text-xs font-bold text-white">
-                                            {member.avatar}
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-sm font-semibold text-white truncate">{member.name}</p>
-                                            <p className="text-xs text-zinc-500 truncate">{member.email}</p>
-                                        </div>
-                                        <span className="text-xs font-bold text-zinc-500 bg-white/5 px-2.5 py-1 rounded-full">{member.role}</span>
-                                    </div>
-                                ))}
+                                {/* Team members will be loaded from API */}
+                                <p className="text-sm text-zinc-500 text-center py-4">No team members yet</p>
                             </div>
                             <div className="flex gap-2">
                                 <input
@@ -236,8 +287,7 @@ export default function SettingsPage() {
                             {notifications.map((notif) => (
                                 <div key={notif.id} className="flex items-center justify-between px-5 py-4 hover:bg-white/2 transition-colors">
                                     <div className="flex-1 min-w-0 mr-4">
-                                        <p className="text-sm font-semibold text-white">{notif.title}</p>
-                                        <p className="text-xs text-zinc-500 mt-0.5">{notif.description}</p>
+                                        <p className="text-sm font-semibold text-white">{notif.description}</p>
                                     </div>
                                     <button
                                         onClick={() => toggleNotification(notif.id)}

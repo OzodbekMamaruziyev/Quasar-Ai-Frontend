@@ -3,7 +3,18 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { ArrowRight, Clock, Star, ShoppingBag, Activity, TrendingUp, User, BarChart2, Target } from "lucide-react";
-import { APP_TEMPLATES } from "@/lib/mock-data";
+
+// Local templates data - static landing page content
+const APP_TEMPLATES = [
+  { id: "1", name: "E-Commerce", emoji: "🛍️", description: "Full shopping app with cart & checkout", screens: 12 },
+  { id: "2", name: "Social Network", emoji: "👥", description: "Feed, stories, messaging & profiles", screens: 18 },
+  { id: "3", name: "Food Delivery", emoji: "🍕", description: "Restaurant listing, ordering & tracking", screens: 14 },
+  { id: "4", name: "Fitness App", emoji: "💪", description: "Workouts, nutrition & progress tracking", screens: 10 },
+  { id: "5", name: "Finance App", emoji: "💳", description: "Banking, budgeting & investments", screens: 16 },
+  { id: "6", name: "Travel App", emoji: "✈️", description: "Booking, itineraries & local guides", screens: 20 },
+  { id: "7", name: "Education", emoji: "📚", description: "Courses, quizzes & progress tracking", screens: 15 },
+  { id: "8", name: "Healthcare", emoji: "🏥", description: "Appointments, records & telemedicine", screens: 13 },
+];
 
 const SHOWCASE_ITEMS = [
   {
@@ -102,21 +113,21 @@ export default function Showcase() {
                             className="group relative flex flex-col overflow-hidden rounded-3xl border border-white/5 bg-zinc-900/30 hover:border-white/10 transition-all hover:-translate-y-1"
                         >
                             {/* Phone Preview Area */}
-                            <div className={`relative h-72 sm:h-80 overflow-hidden bg-gradient-to-br ${item.gradient} bg-opacity-10`}>
-                                <div className={`absolute inset-0 bg-gradient-to-br ${item.gradient} opacity-10 group-hover:opacity-20 transition-opacity`} />
+                            <div className={`relative h-72 sm:h-80 overflow-hidden bg-linear-to-br ${item.gradient} bg-opacity-10`}>
+                                <div className={`absolute inset-0 bg-linear-to-br ${item.gradient} opacity-10 group-hover:opacity-20 transition-opacity`} />
 
                                 {/* Centered Phone */}
                                 <div className="absolute inset-0 flex items-center justify-center">
                                     <motion.div
                                       animate={{ y: [0, -8, 0] }}
                                       transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: index * 0.5 }}
-                                      className="w-[160px] rounded-[2rem] border-[7px] border-zinc-900 bg-zinc-950 shadow-2xl ring-1 ring-white/10"
+                                      className="w-40 rounded-4xl border-[7px] border-zinc-900 bg-zinc-950 shadow-2xl ring-1 ring-white/10"
                                     >
-                                      <div className="relative aspect-[9/19] overflow-hidden rounded-[1.5rem]">
+                                      <div className="relative aspect-9/19 overflow-hidden rounded-3xl">
                                         {/* Screen content */}
-                                        <div className={`absolute inset-0 bg-gradient-to-b ${item.bgGradient}`} />
+                                        <div className={`absolute inset-0 bg-linear-to-b ${item.bgGradient}`} />
                                         <div className="relative flex h-full flex-col gap-2 p-3">
-                                          <div className={`h-8 w-full rounded-lg bg-gradient-to-r ${item.gradient} opacity-70`} />
+                                          <div className={`h-8 w-full rounded-lg bg-linear-to-r ${item.gradient} opacity-70`} />
                                           <div className="grid grid-cols-2 gap-1.5 flex-1">
                                             {item.screenIcons.map((Icon, i) => (
                                               <div key={i} className="flex flex-col items-center justify-center rounded-lg bg-white/5 p-1.5 gap-1 border border-white/5">
@@ -125,7 +136,7 @@ export default function Showcase() {
                                               </div>
                                             ))}
                                           </div>
-                                          <div className={`h-6 w-full rounded-lg bg-gradient-to-r ${item.gradient} opacity-50`} />
+                                          <div className={`h-6 w-full rounded-lg bg-linear-to-r ${item.gradient} opacity-50`} />
                                         </div>
                                         {/* Dynamic Island */}
                                         <div className="absolute top-1.5 left-1/2 h-3.5 w-12 -translate-x-1/2 rounded-full bg-black" />
@@ -152,7 +163,7 @@ export default function Showcase() {
                                 <p className="text-xs text-zinc-500 italic leading-relaxed mb-4">{item.prompt}</p>
                                 <Link
                                     href="/builder"
-                                    className={`inline-flex items-center gap-1.5 text-sm font-semibold text-accent hover:text-blue-400 transition-colors`}
+                                    className="inline-flex items-center gap-1.5 text-sm font-semibold text-accent hover:text-blue-400 transition-colors"
                                 >
                                     Build something similar <ArrowRight className="h-3.5 w-3.5" />
                                 </Link>
@@ -188,7 +199,7 @@ export default function Showcase() {
                             href="/builder"
                             className="group flex flex-col items-center gap-2 rounded-2xl border border-white/5 bg-white/3 p-4 text-center hover:bg-white/8 hover:border-white/10 transition-all overflow-hidden"
                           >
-                            <div className={`h-8 w-8 rounded-xl bg-gradient-to-br ${gradients[i % gradients.length]} group-hover:scale-110 transition-transform shadow-lg`} />
+                            <div className={`h-8 w-8 rounded-xl bg-linear-to-br ${gradients[i % gradients.length]} group-hover:scale-110 transition-transform shadow-lg`} />
                             <span className="text-xs font-medium text-zinc-400 group-hover:text-white transition-colors leading-tight">{template.name}</span>
                           </Link>
                         );

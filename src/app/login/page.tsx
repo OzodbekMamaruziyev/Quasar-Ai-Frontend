@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { Github, ArrowRight, Eye, EyeOff, AlertCircle } from "lucide-react";
+import { Github, ArrowRight, Eye, EyeOff, AlertCircle, ArrowLeft } from "lucide-react";
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import AuthBackground from "@/components/visuals/AuthBackground";
+import { useAuth } from "@/context/AuthContext";
 
 // 3D Tilt Effect Hook
 const useTiltEffect = () => {
@@ -65,12 +66,29 @@ const createParticleBurst = (x: number, y: number) => {
 
 export default function LoginPage() {
     const router = useRouter();
+    const { login, isAuthenticated, isLoading: authLoading } = useAuth();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const tiltEffect = useTiltEffect();
+
+    // Redirect if already logged in
+    useEffect(() => {
+        if (isAuthenticated && !authLoading) {
+            router.push("/dashboard");
+        }
+    }, [isAuthenticated, authLoading, router]);
+
+    // Show loading while checking auth
+    if (authLoading || isAuthenticated) {
+        return (
+            <div className="flex min-h-screen items-center justify-center bg-background">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent"></div>
+            </div>
+        );
+    }
 
     const validate = () => {
         if (!email) return "Email is required.";
@@ -86,28 +104,29 @@ export default function LoginPage() {
         if (err) { setError(err); return; }
         setError("");
         setLoading(true);
-        // Simulate auth delay
-        await new Promise((r) => setTimeout(r, 1200));
-        setLoading(false);
-        router.push("/dashboard");
         
-        // Particle burst on successful login
-        const rect = e.currentTarget.getBoundingClientRect();
-        createParticleBurst(rect.left + rect.width / 2, rect.top + rect.height / 2);
+        try {
+            await login(email, password);
+            // Success - particle burst
+            const rect = e.currentTarget.getBoundingClientRect();
+            createParticleBurst(rect.left + rect.width / 2, rect.top + rect.height / 2);
+        } catch (error: any) {
+            setError(error.message || "Invalid credentials. Please try again.");
+        } finally {
+            setLoading(false);
+        }
     };
 
-    const handleSocial = async () => {
-        setLoading(true);
-        await new Promise((r) => setTimeout(r, 1000));
-        setLoading(false);
-        router.push("/dashboard");
+    const handleSocial = (provider: 'google' | 'github') => {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+        window.location.href = `${apiUrl}/auth/${provider}`;
     };
 
     return (
         <div className="flex min-h-screen items-center justify-center bg-background px-4 sm:px-6 relative overflow-hidden">
             <div className="absolute inset-0 -z-20">
                 <AuthBackground />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+                <div className="absolute inset-0 bg-linear-to-t from-black/60 via-black/20 to-transparent" />
             </div>
             <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_center,rgba(59,130,246,0.06),transparent_70%)]" />
 
@@ -118,32 +137,38 @@ export default function LoginPage() {
                 {...tiltEffect}
             >
                 {/* Card */}
-                <div className="rounded-3xl border border-white/8 bg-zinc-900/50 p-8 sm:p-10 backdrop-blur-xl shadow-2xl shadow-black/40">
+                <div className="rounded-3xl border border-white/8 bg-zinc-900/50 p-8 sm:p-10 backdrop-blur-xl shadow-2xl shadow-black/40 relative">
+                    {/* Back Button */}
+                    <Link
+                        href="/"
+                        className="absolute top-6 left-6 flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-zinc-400 transition-all hover:bg-white/10 hover:text-white"
+                    >
+                        <ArrowLeft size={18} />
+                    </Link>
+
                     {/* Logo */}
-                    <div className="text-center mb-8">
+                    <div className="text-center mb-10">
                         <Link href="/" className="inline-flex items-center gap-2 mb-6">
                             <Image src="/quasar-logo.svg" width={200} height={50} alt="Quasar" />
                         </Link>
                         <h2 className="text-2xl font-bold text-white tracking-tight">Welcome back</h2>
-                        <p className="mt-2 text-sm text-zinc-500">Sign in to continue to your dashboard</p>
+                        <p className="mt-2 text-sm text-zinc-500">Sign in to start building your next app</p>
                     </div>
 
                     {/* Social Buttons */}
-                    <div className="space-y-3 mb-6">
+                    <div className="space-y-4">
                         <button
-                            onClick={handleSocial}
-                            disabled={loading}
-                            className="flex w-full items-center justify-center gap-3 rounded-xl bg-white text-black py-3 text-sm font-bold transition-all hover:bg-zinc-100 disabled:opacity-60 disabled:cursor-not-allowed"
+                            onClick={() => handleSocial('github')}
+                            className="flex h-12 w-full items-center justify-center gap-3 rounded-xl bg-white text-black text-sm font-bold transition-all hover:scale-[1.02] hover:bg-zinc-100 active:scale-95"
                         >
-                            <Github size={18} />
+                            <Github size={20} />
                             Continue with GitHub
                         </button>
                         <button
-                            onClick={handleSocial}
-                            disabled={loading}
-                            className="flex w-full items-center justify-center gap-3 rounded-xl border border-white/10 bg-white/5 py-3 text-sm font-bold text-white transition-all hover:bg-white/10 disabled:opacity-60 disabled:cursor-not-allowed"
+                            onClick={() => handleSocial('google')}
+                            className="flex h-12 w-full items-center justify-center gap-3 rounded-xl border border-white/10 bg-white/5 text-sm font-bold text-white transition-all hover:scale-[1.02] hover:bg-white/10 active:scale-95"
                         >
-                            <svg className="h-4 w-4" viewBox="0 0 24 24">
+                            <svg className="h-5 w-5" viewBox="0 0 24 24">
                                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
                                 <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
                                 <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
@@ -153,86 +178,8 @@ export default function LoginPage() {
                         </button>
                     </div>
 
-                    {/* Divider */}
-                    <div className="relative mb-6">
-                        <div className="absolute inset-0 flex items-center">
-                            <div className="w-full border-t border-white/5" />
-                        </div>
-                        <div className="relative flex justify-center text-xs uppercase">
-                            <span className="bg-zinc-900 px-3 text-zinc-600 tracking-widest font-bold">Or continue with email</span>
-                        </div>
-                    </div>
-
-                    {/* Error */}
-                    {error && (
-                        <motion.div
-                            initial={{ opacity: 0, y: -8 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="mb-4 flex items-center gap-2 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400"
-                        >
-                            <AlertCircle size={16} className="shrink-0" />
-                            {error}
-                        </motion.div>
-                    )}
-
-                    {/* Form */}
-                    <form className="space-y-4" onSubmit={handleSubmit}>
-                        <div>
-                            <label className="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-2">Email address</label>
-                            <input
-                                type="email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                placeholder="name@example.com"
-                                className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent transition-all placeholder:text-zinc-600"
-                            />
-                        </div>
-                        <div>
-                            <div className="flex items-center justify-between mb-2">
-                                <label className="block text-xs font-bold uppercase tracking-widest text-zinc-500">Password</label>
-                                <button type="button" className="text-xs text-zinc-500 hover:text-white transition-colors">Forgot password?</button>
-                            </div>
-                            <div className="relative">
-                                <input
-                                    type={showPassword ? "text" : "password"}
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    placeholder="••••••••"
-                                    className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 pr-12 text-sm text-white focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent transition-all placeholder:text-zinc-600"
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 transition-colors"
-                                >
-                                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                                </button>
-                            </div>
-                        </div>
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="flex w-full items-center justify-center gap-2 rounded-xl bg-accent py-3 text-sm font-bold text-white shadow-lg shadow-blue-500/20 transition-all hover:scale-[1.02] hover:bg-blue-600 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
-                        >
-                            {loading ? (
-                                <>
-                                    <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                                    </svg>
-                                    Signing in...
-                                </>
-                            ) : (
-                                <>Sign In <ArrowRight size={16} /></>
-                            )}
-                        </button>
-                    </form>
-
-                    <p className="mt-6 text-center text-sm text-zinc-500">
-                        Don&apos;t have an account?{" "}
-                        <Link href="/signup" className="font-bold text-white hover:text-accent transition-colors">
-                            Sign up free
-                        </Link>
+                    <p className="mt-8 text-center text-[10px] text-zinc-600 uppercase tracking-widest font-bold">
+                        By continuing, you agree to our Terms and Privacy Policy
                     </p>
                 </div>
             </motion.div>
